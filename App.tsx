@@ -29,9 +29,9 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end sm:p-8 pointer-events-none">
           {/* Backdrop (Only visual, not clickable to close) */}
           <div className="absolute inset-0 pointer-events-auto bg-black/5 sm:bg-transparent backdrop-blur-[1px] sm:backdrop-blur-none transition-all"></div>
-          
+
           {/* Chat Window */}
-          <div className="w-full h-[92vh] sm:w-[450px] sm:h-[650px] pointer-events-auto transition-all animate-in slide-in-from-bottom-10 fade-in duration-300 shadow-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden ring-1 ring-black/5">
+          <div className="w-full h-[92vh] sm:w-[450px] sm:h-[650px] pointer-events-auto relative z-10 transition-all animate-in slide-in-from-bottom-10 fade-in duration-300 shadow-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden ring-1 ring-black/5">
             <ChatInterface onClose={() => setIsChatOpen(false)} userProfile={userProfile} />
           </div>
         </div>

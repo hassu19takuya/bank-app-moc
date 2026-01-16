@@ -13,6 +13,7 @@ export interface Message {
   groundingUrls?: Array<{ title: string; uri: string }>;
   audioData?: Float32Array; // Decoded audio buffer data
   isError?: boolean;
+  chartData?: { category: string; amount: number }[]; // For Analyst Agent charts
 }
 
 export interface Transaction {

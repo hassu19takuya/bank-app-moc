@@ -4,6 +4,10 @@ import { AgentType, Message, AgentConfig, UserProfile } from '../types';
 import { AGENTS } from '../constants';
 import { generateAgentResponse } from '../services/geminiService';
 import MarkdownRenderer from './MarkdownRenderer';
+import ChartComponent from './ChartComponent'; // Import ChartComponent
+
+
+
 
 interface ChatInterfaceProps {
   onClose: () => void;
@@ -59,10 +63,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, userProfile }) =
       text: response.text,
       timestamp: Date.now(),
       groundingUrls: response.groundingUrls,
-      audioData: response.audioBuffer ? response.audioBuffer.getChannelData(0) : undefined
+      audioData: response.audioBuffer ? response.audioBuffer.getChannelData(0) : undefined,
+      chartData: response.chartData
     };
 
-    (botMsg as any)._audioBuffer = response.audioBuffer; 
+    (botMsg as any)._audioBuffer = response.audioBuffer;
 
     setMessages((prev) => [...prev, botMsg]);
     setIsLoading(false);
@@ -91,7 +96,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, userProfile }) =
     source.buffer = buffer;
     source.connect(audioContextRef.current.destination);
     source.start();
-    
+
     setIsPlaying(message.id);
     source.onended = () => setIsPlaying(null);
   };
@@ -99,7 +104,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, userProfile }) =
   const handleAgentSelect = (agentId: AgentType) => {
     setActiveAgentId(agentId);
     setIsDropdownOpen(false);
-    
+
     // Reset Chat History when switching agents
     setMessages([
       {
@@ -121,9 +126,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, userProfile }) =
             <X size={24} />
           </button>
         </div>
-        
+
         <div className="relative">
-          <button 
+          <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full text-left flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-white/10 transition-colors border border-transparent focus:outline-none focus:border-white/30"
           >
@@ -142,45 +147,48 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, userProfile }) =
           {/* Click-based Dropdown */}
           {isDropdownOpen && (
             <>
-                <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)}></div>
-                <div className="absolute top-full left-0 w-full bg-white text-gray-800 rounded-lg shadow-xl mt-2 overflow-hidden z-20 border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
-                    {AGENTS.map((agent) => (
-                    <button
-                        key={agent.id}
-                        onClick={() => handleAgentSelect(agent.id)}
-                        className={`w-full text-left p-3 flex items-center gap-3 hover:bg-red-50 transition-colors border-b last:border-0 border-gray-50 ${activeAgentId === agent.id ? 'bg-red-50' : ''}`}
-                    >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm text-white ${agent.color}`}>
-                            {agent.icon}
-                        </div>
-                        <div className="text-sm font-medium">{agent.name}</div>
-                    </button>
-                    ))}
-                </div>
+              <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)}></div>
+              <div className="absolute top-full left-0 w-full bg-white text-gray-800 rounded-lg shadow-xl mt-2 overflow-hidden z-20 border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                {AGENTS.map((agent) => (
+                  <button
+                    key={agent.id}
+                    onClick={() => handleAgentSelect(agent.id)}
+                    className={`w-full text-left p-3 flex items-center gap-3 hover:bg-red-50 transition-colors border-b last:border-0 border-gray-50 ${activeAgentId === agent.id ? 'bg-red-50' : ''}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm text-white ${agent.color}`}>
+                      {agent.icon}
+                    </div>
+                    <div className="text-sm font-medium">{agent.name}</div>
+                  </button>
+                ))}
+              </div>
             </>
           )}
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 min-h-0">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 min-h-0 basis-0 overscroll-y-contain custom-scrollbar">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
-            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm ${
-              msg.role === 'user' ? 'bg-gray-800 text-white' : 'bg-white text-red-600 border border-red-100'
-            }`}>
+            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm ${msg.role === 'user' ? 'bg-gray-800 text-white' : 'bg-white text-red-600 border border-red-100'
+              }`}>
               {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
             </div>
 
-            <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm text-sm ${
-              msg.role === 'user' 
-                ? 'bg-gray-800 text-white rounded-tr-none' 
-                : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
-            }`}>
+            <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm text-sm ${msg.role === 'user'
+              ? 'bg-gray-800 text-white rounded-tr-none'
+              : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+              }`}>
               <MarkdownRenderer content={msg.text} />
+
+              {/* Render Chart if available */}
+              {msg.chartData && (
+                <ChartComponent data={msg.chartData} />
+              )}
 
               {/* Grounding Sources */}
               {msg.groundingUrls && msg.groundingUrls.length > 0 && (
@@ -188,7 +196,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, userProfile }) =
                   <p className="text-xs font-semibold text-gray-500 mb-2">参照ソース:</p>
                   <div className="flex flex-wrap gap-2">
                     {msg.groundingUrls.map((url, idx) => (
-                      <a 
+                      <a
                         key={idx}
                         href={url.uri}
                         target="_blank"
@@ -218,7 +226,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, userProfile }) =
         ))}
         {isLoading && (
           <div className="flex items-start gap-3">
-             <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-white text-red-600 border border-red-100 shadow-sm">
+            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-white text-red-600 border border-red-100 shadow-sm">
               <Bot size={16} />
             </div>
             <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">

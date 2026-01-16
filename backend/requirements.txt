@@ -1,0 +1,7 @@
+google-genai
+python-dotenv
+google-cloud-bigquery
+pandas
+db-dtypes
+fastapi
+uvicorn[standard]
